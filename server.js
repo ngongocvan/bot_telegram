@@ -1,61 +1,90 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const TelegramBot = require("node-telegram-bot-api");
-require("dotenv").config(); // Nạp biến môi trường từ tệp .env
+// mình bắt đầu nhé hôm nay mic hư :)
+var canvas = document.getElementById("gamezone");
+var context = canvas.getContext("2d");
+var scoreshow = document.getElementById("score");
 
-const app = express();
-const port = 3000;
+var birdimg = new Image();
+var hinhnenchinh = new Image();
+var ongtren = new Image();
+var ongduoi = new Image();
+birdimg.src = "images/bird.png";
+hinhnenchinh.src = "images/nenchinh.png";
+ongtren.src = "images/ongtren.png";
+ongduoi.src = "images/ongduoi.png";
+// đầu tiên là nạp các hình vô nha các bạn :)
+// bước 2 là tạo 1 số biến cần thiết
 
-// Kiểm tra và lấy token từ biến môi trường
-const token = process.env.TELEGRAM_BOT_TOKEN;
-if (!token) {
-  throw new Error("Telegram Bot Token not provided!");
-}
+var score = 0;
+var khoangcachhaiong = 140; // mình xin phép đặt tên tiếng việt để các bạn dễ hình dung
+var khoangcachdenongduoi; // biến này là khoảng cách từ đầu ống trên đến vị trí đầu ống dưới
+// tạo ra 1 object chim với tọa độ x y là 1 nữa canvas
+var bird = {
+  x: hinhnenchinh.width / 5,
+  y: hinhnenchinh.height / 2,
+};
+var ong = []; //tạo mảng ống để chứa các ống di chuỷen
+ong[0] = {
+  x: canvas.width,
+  y: 0, // khởi tạo ống đầu tiên nằm bên phải ngoài cùng và y=0;
+};
 
-const bot = new TelegramBot(token, { polling: true });
+//tạo function để chạy trò chơi
+function run() {
+  // load hình ảnh vào
+  context.drawImage(hinhnenchinh, 0, 0);
+  context.drawImage(birdimg, bird.x, bird.y);
 
-app.use(bodyParser.json());
-app.use(express.static("public"));
+  for (var i = 0; i < ong.length; i++) {
+    khoangcachdenongduoi = ongtren.height + khoangcachhaiong;
+    context.drawImage(ongtren, ong[i].x, ong[i].y);
+    // vẽ ống trên theo tọa độ của ống đó
+    //  ống dưới phụ thuộc ống trên
+    context.drawImage(ongduoi, ong[i].x, ong[i].y + khoangcachdenongduoi);
+    // mình lấy vị trí ống trên cộng khoảng cách đến
+    // ống dưới vì tí nữa mình random nó lên xuống
+    ong[i].x -= 5; //để ống di chuyển
 
-// Serve the HTML file
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
-});
-
-// Handle button data from the web interface
-app.post("/sendButtonData", (req, res) => {
-  const buttonId = req.body.buttonId;
-  let message = "";
-
-  switch (buttonId) {
-    case "button1":
-      message = "You clicked Button 1";
-      break;
-    case "button2":
-      message = "You clicked Button 2";
-      break;
-    case "button3":
-      message = "You clicked Button 3";
-      break;
-    default:
-      message = "Unknown button";
+    // lập trình thêm ống khi ống di chuyển đến giữa
+    // nó sẽ tạo thêm 1 ống nữa
+    if (ong[i].x == canvas.width / 2) {
+      ong.push({
+        x: canvas.width,
+        y: Math.floor(Math.random() * ongtren.height) - ongtren.height,
+        // ở đây mình sẽ làm video giải thích sau về
+        // random này các bạn làm theo là được
+      });
+    }
+    if (ong[i].x == 0) ong.splice(0, 1);
+    // nếu ống đụng lề trái thì xóa nó đi để tránh mảng ống
+    //  bị đầy làm chậm
+    if (ong[i].x == bird.x) score++;
+    // giờ làm cái khó nhất là thua
+    if (
+      bird.y + birdimg.height == canvas.height ||
+      (bird.x + birdimg.width >= ong[i].x &&
+        bird.x <= ong[i].x + ongtren.width &&
+        (bird.y <= ong[i].y + ongtren.height ||
+          bird.y + birdimg.height >= ong[i].y + khoangcachdenongduoi))
+    ) {
+      return;
+    }
   }
+  // ok điều kiện đầu tiên là đụng đất
+  // các bạn chú ý là tính tọa độ y cộng với độ cao con chim
+  //  điều kiện thứ hai là so sánh vị trí x con chim
+  // với cái ống
+  // và cuối cùng là so sánh vị trí y
 
-  // Send a message to a specific chat or user
-  const chatId = 1; // Thay bằng chat ID thực tế
-  bot.sendMessage(chatId, message);
-
-  res.json({ message: `Button ${buttonId} data sent to Telegram bot` });
+  scoreshow.innerHTML = "score: " + score;
+  // cho bird rơi xuống
+  bird.y += 2;
+  requestAnimationFrame(run);
+}
+//thêm function cho nó bay lên khi nhấn
+document.addEventListener("keydown", function () {
+  bird.y -= 100;
 });
-
-bot.on("message", (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(
-    chatId,
-    "Hello! Use the web interface to interact with the bot."
-  );
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+// ok khá ổn
+// các bạn nhớ là tọa độ trên máy tính là ở gốc trên trái đi xuống dưới
+// là chiều dương nha
+run();

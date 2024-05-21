@@ -4,31 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Bot Interface</title>
+    <title>Document</title>
 </head>
 
 <body>
-    <h1>Welcome to the Telegram Bot Interface</h1>
-    <button onclick="sendButtonData('button1')">Button 1</button>
-    <button onclick="sendButtonData('button2')">Button 2</button>
-    <button onclick="sendButtonData('button3')">Button 3</button>
-
-    <script>
-        function sendButtonData(buttonId) {
-            fetch('/sendButtonData', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ buttonId: buttonId })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    alert(data.message);
-                });
-        }
-    </script>
+    <canvas id="gamezone" width="900" height="500"></canvas>
+    <p id="score">score: 0</p>
 </body>
+<script src="main.js"></script>
 
 </html>
